@@ -8,6 +8,7 @@ import java.util.*;
  * TODO　链表的遍历问题
  * TODO　合并排序问题
  * TODO　顺序、对称判定问题（回文数、有效括号组）
+ * TODO 应该为字符串加个分类
  */
 
 /**
@@ -384,6 +385,293 @@ class LintCodeArray {
         System.arraycopy(result,0,A,0,m+n);
     }
 
+
+    // FIXME 171  数组找俩数问题 + 字符串对比问题
+    public List<String> anagrams(String[] strs) {
+        // 存放结果
+        List<String> result = new ArrayList<>();
+        // 存放单身狗
+        HashSet<String> singles = new HashSet<>();
+
+        /* 一个容器放结果，放的同时匹配下，记录单身狗的下标，遍历完后从后面开始移除掉单身狗 */
+        for (String src : strs) {
+            // 如果没找到伴儿
+            if (!compareSingle(src,result,singles)){
+                singles.add(src);
+            }
+            result.add(src);
+        }
+        // 移除掉所有记录在案的单身狗
+        result.removeAll(singles);
+
+        return result;
+    }
+    private boolean compareSingle(String src, List<String> result,  HashSet<String> singles){
+        // 遍历结果中的字符串
+        for (String resultStr : result) {
+            // 检查 resultStr 是否与 src 匹配
+            if (compareStr(resultStr, src)) {
+                // 有匹配则脱单
+                singles.remove(resultStr);
+                return true;
+            }
+        }
+        // 没能找到伴侣
+        return false;
+    }
+    /**
+     * 检查是否匹配规则
+     */
+    private boolean compareStr(String s, String t) {
+        if (s.length() != t.length()) return false;
+        StringBuilder sbT = new StringBuilder(t);
+        int index = -1;
+        for (char c : s.toCharArray()) {
+            index = sbT.indexOf(c + "");
+            if (index < 0) {
+                return false;
+            } else {
+                sbT.deleteCharAt(index);
+            }
+
+        }
+        return true;
+    }
+
+    /*
+     * @param source: source string to be scanned.
+     * @param target: target string containing the sequence of characters to match
+     * @return: a index to the first occurrence of target in source, or -1  if target is not part of source.
+     */
+    // FIXME 13 看成一个数组遍历问题，调String api 解决
+    // 手写一个O(n)、KMP
+    public static int strStr(String source, String target) {
+        if(source == null || target == null){
+            return -1;
+        }
+        // 2837 ms
+        // return source.indexOf(target);
+        return kmpStr(source, target);
+    }
+
+    //2442 ms 加个部分匹配表
+    private static int kmpStr(String source,String target){
+        if(target.length() == 0) return 0;
+        if(source.length() == 0) return -1;
+
+        char[] src = source.toCharArray();
+        char[] tar = target.toCharArray();
+        int[] offsetArr = createOffsetTable(tar);
+        char first = tar[0];
+
+        for(int i = 0; i <= src.length - tar.length;){
+
+            if(src[i] != first){
+                i++;
+                continue;
+            }
+            int end = i + tar.length;
+            i++;
+            int j = 1;
+            for(; j < tar.length; j++,i++){
+                if(src[i] != tar[j]){
+                    break;
+                }
+            }
+            if(i == end){
+                return i - tar.length;
+            }else{
+                i -= offsetArr[j-1];
+            }
+        }
+        return -1;
+
+    }
+    // 创建一个偏移量表
+    private static int[] createOffsetTable(char[] tar){
+        int offset = 0;
+        int[] offArr = new int[tar.length];
+        for(int i = 1;i< tar.length; i++){
+            if(tar[i] == tar[offset]){
+                offset++;
+            }else{
+                offset = 0;
+            }
+            offArr[i] = offset;
+        }
+        return offArr;
+    }
+
+    /*
+     * @param matrix: matrix, a list of lists of integers
+     * @param target: An integer
+     * @return: a boolean, indicate whether matrix contains target
+     */
+    // FIXME 28 数组找数问题、二维找、二分法
+    // TODO O(log(n) + log(m)) 时间复杂度，横纵双二分查找
+    public boolean searchMatrix(int[][] matrix, int target) {
+
+        for(int i = 0; i < matrix.length; i++){
+            int first = matrix[i][0];
+            if(target == first){
+                return true;
+            }
+            if(i < matrix.length-1){
+                int nextRowFirst = matrix[i+1][0];
+                if(target > nextRowFirst){
+                    continue;
+                }
+            }
+            int[] row = matrix[i];
+            for(int j = 1; j < row.length; j++){
+                if(target == row[j]){
+                    return true;
+                }
+            }
+
+        }
+
+        return false;
+    }
+
+    /**
+     * @param s: The first string
+     * @param t: The second string
+     * @return true or false
+     */
+    // FIXME 158 字符串匹配问题
+    public boolean anagram(String s, String t) {
+
+        if (s.length() != t.length()) return false;
+        StringBuilder sbT = new StringBuilder(t);
+        int index = -1;
+        for (char c : s.toCharArray()) {
+            index = sbT.indexOf(c + "");
+            if (index < 0) {
+                return false;
+            } else {
+                sbT.deleteCharAt(index);
+            }
+
+        }
+        return true;
+    }
+
+    /**
+     * @param nums: The integer array.
+     * @param target: Target to find.
+     * @return: The first position of target. Position starts from 0.
+     */
+    // FIXME 14 二分法
+    public int binarySearch(int[] nums, int target) {
+        return search(nums,target,0,nums.length);
+    }
+
+    private int search(int[] nums, int target,int begin,int end){
+        int centerIndex = (begin + end)/2;
+        if(centerIndex == 0){
+            return -1;
+        }
+        if(target > nums[centerIndex]  ){
+            return search(nums,target,centerIndex,end);
+        }else if(target < nums[centerIndex]){
+            return search(nums,target,begin,centerIndex);
+        }else{
+            return centerIndex;
+        }
+    }
+
+    /*
+     * @param A: an integer array
+     * @return:
+     */
+    // FIXME 463 排序问题
+    public void sortIntegers(int[] A) {
+
+        // maopao(A);
+        qSort(A,0,A.length-1);
+
+    }
+
+    // 2894 ms
+    private void qSort(int[]A,int low,int high){
+
+        if(low >= high || A == null||A.length <= 1){
+            return;
+        }
+
+        int i = low,j = high;
+        int pivot = A[(low + high)/2];
+        while(i <= j){
+            while(A[i] < pivot){
+                i++;
+            }
+            while(A[j] > pivot){
+                j--;
+            }
+            // 经过上面两步，这里两个下标的数确定是需要对调的了
+            if(i < j){
+                sortSwap(A,i++,j--);
+            }else if(i == j){
+                i++;
+            }
+            // 递归排序接下来的部分
+            qSort(A,low,j);
+            qSort(A,i,high);
+        }
+    }
+
+
+
+    //3134 ms
+    private void maopao(int[] A){
+        for(int i = 0; i < A.length; i++){
+            for(int j = i; j < A.length; j++){
+                sortSwap(A,i,j);
+            }
+        }
+    }
+
+    // swap, a must <= b.
+    private void sortSwap(int[] A, int i,int j){
+        if(A[i] > A[j]){
+            int temp = A[i];
+            A[i] = A[j];
+            A[j] = temp;
+        }
+    }
+
+    /*
+     * @param s: a string
+     * @return: an integer
+     */
+    // FIXME 384 数组找数，字符串子字符串
+    // TODO O(n)
+    public int lengthOfLongestSubstring(String s) {
+
+        char[] chars = s.toCharArray();
+        List<Character> list = new ArrayList<>();
+        int max = 0;
+        for(char c: chars){
+            for(;!list.isEmpty() && list.contains(c);list.remove(0));
+            list.add(c);
+            max = Math.max(max,list.size());
+        }
+        return max;
+
+    }
+
+    public static void main(String[] args){
+        System.out.println("args = " + strStr("BBC ABCDAB ABCDABCDABDE", "ABCDABD"));
+
+        LinkedList<Character> linkedList = new LinkedList<>();
+        List<String> strs = new ArrayList<>();
+        TreeSet<Integer> set = new TreeSet<>();
+        set.add(100);
+        set.add(2);
+        System.out.println("set = " + set);
+    }
+
 }
 
 /**
@@ -434,6 +722,24 @@ class LintCodeTree {
             root.right = temp;
             invertBinaryTree(root.left);
             invertBinaryTree(root.right);
+        }
+    }
+
+    /*
+     * @param a: the root of binary tree a.
+     * @param b: the root of binary tree b.
+     * @return: true if they are identical, or false.
+     */
+    // FIXME 469 二叉树，递归
+    public boolean isIdentical(TreeNode a, TreeNode b) {
+        if(a == null && b == null){
+            return true;
+        }else if(a != null && b != null){
+            return a.val == b.val
+                    && isIdentical(a.left,b.left)
+                    && isIdentical(a.right,b.right);
+        }else{
+            return false;
         }
     }
 
@@ -582,9 +888,96 @@ class LintCodeList {
 
     }
 
+    /*
+     * @param head: a ListNode
+     * @param val: An integer
+     * @return: a ListNode
+     */
+    // FIXME 452 链表删除元素
+    // TODO 学习Java的链表实现 LinkedList
+    // ？继承一个ListNode，改成双向链表？
+    public ListNode removeElements(ListNode head, int val) {
+        if(head == null){
+            return null;
+        }
+        ListNode before = null;
+        ListNode node = head;
+        do{
+            if(node == null){
+                break;
+            }
+            if(node.val == val){
+                if(before == null){
+                    node = head = node.next;
+                }else{
+                    node = before.next = node.next;
+                }
+                continue;
+            }
+            before = node;
+            node = node.next;
+        }while(true);
+        return head;
+    }
+
 }
 
 public class LintCode {
+
+
+
+    // FIXME 12 栈问题
+    public class MinStack {
+        // 默认大小10
+        private int[] values = new int[10];
+        private int index = -1;
+        private int min = Integer.MAX_VALUE;
+
+        public MinStack() {
+            // do intialization if necessary
+        }
+
+        /*
+         * @param number: An integer
+         * @return: nothing
+         */
+        public void push(int number) {
+            index ++;
+            min = Math.min(min,number);
+            if(index >= values.length){
+                // 扩容
+                int [] newValues = new int[values.length + 10];
+                System.arraycopy(values,0,newValues,0,values.length);
+                values = newValues;
+            }
+            values[index] = number;
+        }
+
+        /*
+         * @return: An integer
+         */
+        public int pop() {
+            int pop = values[index];
+            values[index--] = 0;
+            if(pop == min){
+                min = Integer.MAX_VALUE;
+                for(int i = 0; i<=index;i++){
+                    min = Math.min(min,values[i]);
+                }
+            }
+            return pop;
+        }
+
+        /*
+         * @return: An integer
+         */
+        public int min() {
+            if(index < 0){
+                throw new RuntimeException();
+            }
+            return min;
+        }
+    }
 
 
     /**
@@ -1002,7 +1395,6 @@ public class LintCode {
             }
 
         }
-
         return true;
     }
 
